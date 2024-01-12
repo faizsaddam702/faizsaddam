@@ -1,0 +1,135 @@
+org 100h
+
+.data
+    prompt_msg db "Masukkan panjang dalam sentimeter: $"
+    result_msg1 db "Panjang dalam meter: $"
+    result_msg2 db "Panjang dalam kilometer: $"
+    result_msg3 db "Panjang dalam inci: $"
+    input_buffer db 10 dup(0) ; buffer untuk menyimpan input
+    meters dw 0 ; variabel untuk menyimpan panjang dalam meter
+    kilometers dw 0 ; variabel untuk menyimpan panjang dalam kilometer
+    inches dw 0 ; variabel untuk menyimpan panjang dalam inci
+
+.code
+    ; Menampilkan pesan untuk meminta input
+    mov dx, offset prompt_msg
+    mov ah, 9
+    int 21h
+
+    ; Membaca input dari keyboard
+    mov dx, offset input_buffer
+    mov ah, 0ah
+    int 21h
+
+    ; Mengonversi input menjadi angka
+    mov si, offset input_buffer + 2 ; melewati panjang dan enter
+    mov cx, 0 ; cx = 0
+    mov bx, 10 ; bx = 10
+input_loop:
+    mov al, [si] ; al = karakter
+    cmp al, 0dh ; jika al = enter, berhenti
+    je stop_input
+    sub al, 30h ; al = al - 30h
+    mul bx ; ax = ax * bx
+    add cx, ax ; cx = cx + ax
+    inc si ; si = si + 1
+    jmp input_loop ; ulangi loop
+stop_input:
+    ; cx sekarang berisi nilai panjang dalam sentimeter
+
+    ; Menghitung panjang dalam meter
+    mov ax, cx ; ax = cx
+    mov bx, 100 ; bx = 100
+    div bx ; ax = ax / bx
+    mov meters, ax ; meters = ax
+
+    ; Menghitung panjang dalam kilometer
+    mov ax, cx ; ax = cx
+    mov bx, 100000 ; bx = 100000
+    div bx ; ax = ax / bx
+    mov kilometers, ax ; kilometers = ax
+
+    ; Menghitung panjang dalam inci
+    mov ax, cx ; ax = cx
+    mov bx, 2.54 ; bx = 2.54 (1 sentimeter dalam inci)
+    imul bx ; ax = ax * bx
+    mov inches, ax ; inches = ax
+
+    ; Menampilkan baris baru
+    mov ah, 2
+    mov dl, 0dh
+    int 21h
+    mov dl, 0ah
+    int 21h
+
+    ; Menampilkan pesan dan hasil konversi
+    mov dx, offset result_msg1
+    mov ah, 9
+    int 21h
+
+    ; Menampilkan panjang dalam meter
+    mov ax, meters ; ax = meters
+    call print_num ; panggil subrutin print_num
+
+    ; Menampilkan baris baru
+    mov ah, 2
+    mov dl, 0dh
+    int 21h
+    mov dl, 0ah
+    int 21h
+
+    ; Menampilkan pesan dan hasil konversi
+    mov dx, offset result_msg2
+    mov ah, 9
+    int 21h
+
+    ; Menampilkan panjang dalam kilometer
+    mov ax, kilometers ; ax = kilometers
+    call print_num ; panggil subrutin print_num
+
+    ; Menampilkan baris baru
+    mov ah, 2
+    mov dl, 0dh
+    int 21h
+    mov dl, 0ah
+    int 21h
+
+    ; Menampilkan pesan dan hasil konversi
+    mov dx, offset result_msg3
+    mov ah, 9
+    int 21h
+
+    ; Menampilkan panjang dalam inci
+    mov ax, inches ; ax = inches
+    call print_num ; panggil subrutin print_num
+
+    ; Keluar dari program
+    mov ah, 4ch
+    int 21h
+
+; Subrutin untuk mencetak angka ke layar
+print_num:
+    mov bx, 10 ; bx = 10
+    mov cx, 0 ; cx = 0
+print_loop:
+    mov dx, 0 ; dx = 0
+    div bx ; ax = ax / bx, dx = ax % bx
+    push dx ; simpan sisa bagi di stack
+    inc cx ; cx = cx + 1
+    cmp ax, 0 ; jika ax = 0, berhenti
+    je stop_print
+    jmp print_loop ; ulangi loop
+stop_print:
+    mov ah, 2 ; ah = 2
+print_loop2:
+    pop dx ; ambil sisa bagi dari stack
+    add dl, 30h ; dl = dl + 30h
+    int 21h ; cetak karakter
+    dec cx ; cx = cx - 1
+    cmp cx, 0 ; jika cx = 0, berhenti
+    je stop_print2
+    jmp print_loop2 ; ulangi loop
+stop_print2:
+    ret ; kembali ke pemanggil
+
+end
